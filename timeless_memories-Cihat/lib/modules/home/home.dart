@@ -238,19 +238,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 ),
                 const Divider(),
                 ListTile(
-                  leading: const Icon(Icons.photo_library),
-                  title: const Text('Galeri (Eski)'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const GalleryPage(),
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
                   leading: const Icon(Icons.map),
                   title: const Text('Konum Kapsülleri'),
                   onTap: () {

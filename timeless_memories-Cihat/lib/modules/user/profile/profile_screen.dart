@@ -8,12 +8,48 @@ import 'package:timeless_memories/modules/galery/family_sharing_screen.dart';
 import 'package:timeless_memories/modules/galery/nfc_scan_screen.dart';
 import 'package:timeless_memories/modules/user/profile/settings_help_screen.dart';
 import 'state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  File? _profileImage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final path = prefs.getString('profile_image_path');
+    if (path != null && path.isNotEmpty && File(path).existsSync()) {
+      setState(() {
+        _profileImage = File(path);
+      });
+    }
+  }
+
+  Future<void> _pickProfileImage() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_image_path', pickedFile.path);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(profileProvider);
 
     // Dummy kullanıcı adı verisi
@@ -240,18 +276,18 @@ class ProfileScreen extends ConsumerWidget {
                 ),
                 child: CircleAvatar(
                   radius: 60,
-                  backgroundImage:
-                      state.user?.photoURL != null
-                          ? NetworkImage(state.user!.photoURL!)
-                          : null,
-                  child:
-                      state.user?.photoURL == null
-                          ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.grey,
-                          )
-                          : null,
+                  backgroundImage: _profileImage != null
+                      ? FileImage(_profileImage!)
+                      : (state.user?.photoURL != null
+                          ? NetworkImage(state.user!.photoURL!) as ImageProvider
+                          : null),
+                  child: (_profileImage == null && state.user?.photoURL == null)
+                      ? const Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Colors.grey,
+                        )
+                      : null,
                   backgroundColor: Colors.grey[200],
                 ),
               ),
@@ -259,67 +295,24 @@ class ProfileScreen extends ConsumerWidget {
                 bottom: 0,
                 right: 0,
                 child: GestureDetector(
-                  onTap: () async {
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(
-                      source: ImageSource.camera,
-                      imageQuality: 80,
-                      maxWidth: 800,
-                    );
-                    if (image != null) {
-                      await ref
-                          .read(profileProvider.notifier)
-                          .updateProfileImage(File(image.path));
-                    }
-                  },
+                  onTap: _pickProfileImage,
                   child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF07B183),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt,
+                    decoration: BoxDecoration(
                       color: Colors.white,
-                      size: 20,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade300, width: 1),
                     ),
+                    padding: const EdgeInsets.all(8),
+                    child: const Icon(Icons.camera_alt, color: Color(0xFF07B183)),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 32),
-          // İsim
-          Text(
-            state.userData?['name'] ?? '',
-            style: GoogleFonts.inter(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black,
-            ),
-          ),
           const SizedBox(height: 12),
-          // Kullanıcı adı
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              '@${state.userData?['username'] ?? ''}',
-              style: GoogleFonts.inter(
-                color: Colors.grey[800],
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Email
           Text(
-            state.userData?['email'] ?? '',
-            style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 15),
+            state.user?.displayName ?? '@sekerrrx01',
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
         ],
       ),

@@ -208,7 +208,7 @@ class _MyCapsulesScreenState extends State<MyCapsulesScreen> {
                     ),
                     decoration: BoxDecoration(
                       color:
-                          isLocked
+                          capsule.openAt.isAfter(DateTime.now())
                               ? Colors.amber.shade100
                               : Colors.green.shade100,
                       borderRadius: const BorderRadius.vertical(
@@ -219,24 +219,24 @@ class _MyCapsulesScreenState extends State<MyCapsulesScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          isLocked
+                          capsule.openAt.isAfter(DateTime.now())
                               ? Icons.lock_outline
                               : Icons.lock_open_outlined,
                           size: 18,
                           color:
-                              isLocked
+                              capsule.openAt.isAfter(DateTime.now())
                                   ? Colors.amber.shade800
                                   : Colors.green.shade800,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          isLocked
-                              ? '${duration.inDays} gün sonra açılacak'
+                          capsule.openAt.isAfter(DateTime.now())
+                              ? '${capsule.openAt.difference(DateTime.now()).inDays} gün sonra açılacak'
                               : 'Kapsül Açık',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color:
-                                isLocked
+                                capsule.openAt.isAfter(DateTime.now())
                                     ? Colors.amber.shade800
                                     : Colors.green.shade800,
                           ),

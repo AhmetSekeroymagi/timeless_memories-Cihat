@@ -259,23 +259,6 @@ class _GalleryPageState extends State<GalleryPage> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Dummy albüm kartları
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.lock_clock),
-                    title: const Text('Doğum Günü'),
-                    subtitle: const Text('Doğum günü kutlaması'),
-                    trailing: const Chip(label: Text('Sadece Ben')),
-                  ),
-                ),
-                Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.location_on),
-                    title: const Text('İstanbul Gezisi'),
-                    subtitle: const Text('İstanbul anıları'),
-                    trailing: const Chip(label: Text('Paylaşılan: ahmet@example.com, zeynep@example.com')),
-                  ),
-                ),
               ],
             ),
           ),
