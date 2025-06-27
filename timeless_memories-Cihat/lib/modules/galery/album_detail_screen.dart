@@ -91,6 +91,60 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     }
   }
 
+  void _addVideo() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickVideo(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        album.contents.add(
+          AlbumContent(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            type: 'video',
+            urlOrText: pickedFile.path, // Cihazdan seçilen video yolu
+            createdAt: DateTime.now(),
+          ),
+        );
+      });
+    }
+  }
+
+  void _addText() async {
+    final controller = TextEditingController();
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Metin Ekle'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(labelText: 'Metin'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('Ekle'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result.trim().isNotEmpty) {
+      setState(() {
+        album.contents.add(
+          AlbumContent(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            type: 'text',
+            urlOrText: result.trim(),
+            createdAt: DateTime.now(),
+          ),
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,7 +185,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                      onPressed: () => _addContent('video'),
+                      onPressed: _addVideo,
                       icon: const Icon(Icons.videocam),
                       label: const Text('Video'),
                     ),
@@ -143,7 +197,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
-                      onPressed: () => _addContent('text'),
+                      onPressed: _addText,
                       icon: const Icon(Icons.text_snippet),
                       label: const Text('Metin'),
                     ),
@@ -170,13 +224,11 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                                             height: 48,
                                             fit: BoxFit.cover,
                                           ))
-                                    : Icon(
-                                        c.type == 'video'
-                                            ? Icons.videocam
-                                            : c.type == 'audio'
-                                                ? Icons.mic
-                                                : Icons.text_snippet,
-                                      ),
+                                    : c.type == 'video'
+                                        ? const Icon(Icons.videocam, size: 36, color: Colors.blueGrey)
+                                        : c.type == 'audio'
+                                            ? const Icon(Icons.mic, size: 32, color: Colors.orange)
+                                            : const Icon(Icons.text_snippet, size: 32, color: Colors.green),
                                 title: Text(c.type.toUpperCase()),
                                 subtitle: Text(
                                   c.type == 'text' ? c.urlOrText : '',
