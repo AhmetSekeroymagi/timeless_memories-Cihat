@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'album_model.dart';
 import 'album_detail_screen.dart';
@@ -15,6 +18,7 @@ class AlbumListScreen extends StatefulWidget {
 class _AlbumListScreenState extends State<AlbumListScreen> {
   late List<Album> _albums;
   _SortOption _currentSortOption = _SortOption.byDate;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -33,55 +37,141 @@ class _AlbumListScreenState extends State<AlbumListScreen> {
     });
   }
 
-  void _showCreateAlbumDialog() {
+  void _showCreateAlbumSheet() {
     final titleController = TextEditingController();
-    // The original dialog logic is simplified for this modern UI
-    showDialog(
+    File? selectedImageFile;
+
+    showModalBottomSheet(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Yeni Albüm Oluştur'),
-            content: TextField(
-              controller: titleController,
-              decoration: const InputDecoration(
-                labelText: 'Albüm Adı',
-                hintText: 'Örn: Muhteşem Anlar',
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setStateInSheet) {
+            Future<void> pickCoverImage() async {
+              final XFile? pickedFile = await _picker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (pickedFile != null) {
+                setStateInSheet(
+                  () => selectedImageFile = File(pickedFile.path),
+                );
+              }
+            }
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 24,
+                right: 24,
+                top: 24,
               ),
-              autofocus: true,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('İptal'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (titleController.text.isNotEmpty) {
-                    setState(() {
-                      _albums.insert(
-                        0,
-                        Album(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          title: titleController.text,
-                          coverImageUrl:
-                              'https://images.unsplash.com/photo-1534294247424-FF8881a2480b?q=80&w=2070&auto=format&fit=crop',
-                          itemCount: 0,
-                          lastUpdated: DateTime.now(),
-                          type: AlbumType.time,
-                          contents: [],
-                          access: AlbumAccess.onlyMe,
-                          accessUserEmails: [],
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Yeni Albüm Oluştur',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  GestureDetector(
+                    onTap: pickCoverImage,
+                    child: Container(
+                      height: 150,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child:
+                          selectedImageFile != null
+                              ? ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.file(
+                                  selectedImageFile!,
+                                  fit: BoxFit.cover,
+                                ),
+                              )
+                              : Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_a_photo_outlined,
+                                    color: Colors.grey.shade700,
+                                    size: 40,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Kapak Fotoğrafı Seç',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Albüm Adı',
+                      border: OutlineInputBorder(),
+                    ),
+                    autofocus: true,
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-                      _sortAlbums();
-                    });
-                    Navigator.pop(context);
-                  }
-                },
-                child: const Text('Oluştur'),
+                      ),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Albümü Oluştur'),
+                      onPressed: () {
+                        if (titleController.text.isNotEmpty) {
+                          setState(() {
+                            _albums.insert(
+                              0,
+                              Album(
+                                id:
+                                    DateTime.now().millisecondsSinceEpoch
+                                        .toString(),
+                                title: titleController.text,
+                                coverImageFile: selectedImageFile,
+                                itemCount: 0,
+                                lastUpdated: DateTime.now(),
+                                type: AlbumType.time,
+                                contents: [],
+                                access: AlbumAccess.onlyMe,
+                                accessUserEmails: [],
+                              ),
+                            );
+                            _sortAlbums();
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
-            ],
-          ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -128,7 +218,7 @@ class _AlbumListScreenState extends State<AlbumListScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showCreateAlbumDialog,
+        onPressed: _showCreateAlbumSheet,
         tooltip: 'Albüm Oluştur',
         child: const Icon(Icons.add),
       ),
@@ -143,6 +233,52 @@ class _AlbumCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Widget coverWidget;
+    if (album.coverImageFile != null) {
+      coverWidget = Image.file(
+        album.coverImageFile!,
+        fit: BoxFit.cover,
+        frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+          return wasSynchronouslyLoaded
+              ? child
+              : AnimatedOpacity(
+                opacity: frame == null ? 0 : 1,
+                duration: const Duration(seconds: 1),
+                curve: Curves.easeOut,
+                child: child,
+              );
+        },
+      );
+    } else if (album.coverImageUrl != null) {
+      coverWidget = Image.network(
+        album.coverImageUrl!,
+        fit: BoxFit.cover,
+        loadingBuilder:
+            (context, child, progress) =>
+                progress == null
+                    ? child
+                    : const Center(child: CircularProgressIndicator()),
+        errorBuilder:
+            (context, error, stackTrace) => Container(
+              color: Colors.grey.shade200,
+              child: Icon(
+                Icons.broken_image,
+                size: 40,
+                color: Colors.grey.shade400,
+              ),
+            ),
+      );
+    } else {
+      coverWidget = Container(
+        color: Colors.grey.shade200,
+        child: Icon(
+          Icons.photo_album_outlined,
+          size: 50,
+          color: Colors.grey.shade400,
+        ),
+      );
+    }
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -159,25 +295,7 @@ class _AlbumCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              album.coverImageUrl,
-              fit: BoxFit.cover,
-              loadingBuilder: (context, child, progress) {
-                return progress == null
-                    ? child
-                    : const Center(child: CircularProgressIndicator());
-              },
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: Colors.grey.shade200,
-                  child: Icon(
-                    Icons.broken_image,
-                    size: 40,
-                    color: Colors.grey.shade400,
-                  ),
-                );
-              },
-            ),
+            coverWidget,
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(

@@ -1,14 +1,17 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:timeless_memories/modules/galery/create_future_letter_screen.dart';
+import 'future_letter_model.dart';
 
 enum LetterRecipient { self, other }
 
 class FutureLetterScreen extends StatefulWidget {
-  const FutureLetterScreen({super.key});
+  const FutureLetterScreen({Key? key}) : super(key: key);
 
   @override
-  State<FutureLetterScreen> createState() => _FutureLetterScreenState();
+  _FutureLetterScreenState createState() => _FutureLetterScreenState();
 }
 
 class _FutureLetterScreenState extends State<FutureLetterScreen> {
@@ -19,6 +22,14 @@ class _FutureLetterScreenState extends State<FutureLetterScreen> {
 
   bool _isRecording = false;
   String? _audioPath;
+
+  late List<FutureLetter> _letters;
+
+  @override
+  void initState() {
+    super.initState();
+    _letters = FutureLetter.generateSampleLetters();
+  }
 
   void _onSaveLetter() {
     if (_openDate == null || _textController.text.isEmpty) {
@@ -62,40 +73,40 @@ class _FutureLetterScreenState extends State<FutureLetterScreen> {
     });
   }
 
+  void _addLetter(FutureLetter newLetter) {
+    setState(() {
+      _letters.insert(0, newLetter);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Geleceğe Mektup'),
-        actions: [
-          IconButton(icon: const Icon(Icons.check), onPressed: _onSaveLetter),
-        ],
+        title: const Text('Geleceğe Mektuplar'),
+        centerTitle: true,
       ),
-      body: ListView(
+      body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildRecipientSelector(),
-          const SizedBox(height: 24),
-          _buildLetterContent(),
-          const SizedBox(height: 24),
-          _buildConfiguration(),
-          const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _onSaveLetter,
-              icon: const Icon(Icons.send_and_archive_outlined),
-              label: const Text('Kaydet ve Bitir'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+        itemCount: _letters.length,
+        itemBuilder: (context, index) {
+          return LetterCard(letter: _letters[index]);
+        },
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CreateFutureLetterScreen(),
             ),
-          ),
-        ],
+          );
+          if (result != null && result is FutureLetter) {
+            _addLetter(result);
+          }
+        },
+        label: const Text('Mektup Yaz'),
+        icon: const Icon(Icons.edit_outlined),
       ),
     );
   }
@@ -245,6 +256,215 @@ class _FutureLetterScreenState extends State<FutureLetterScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class LetterCard extends StatelessWidget {
+  const LetterCard({Key? key, required this.letter}) : super(key: key);
+
+  final FutureLetter letter;
+
+  @override
+  Widget build(BuildContext context) {
+    final cardColor =
+        letter.isLocked
+            ? Colors.grey.shade300
+            : Theme.of(context).colorScheme.surface;
+
+    return Card(
+      elevation: 4,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCardHeader(context),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Alıcı: ${letter.recipient}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Açılış Tarihi: ${DateFormat.yMMMMd('tr_TR').format(letter.openDate)}',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 12),
+                const Divider(),
+                const SizedBox(height: 12),
+                letter.isLocked
+                    ? CountdownTimer(openDate: letter.openDate)
+                    : _buildUnlockedActions(context),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCardHeader(BuildContext context) {
+    return Stack(
+      alignment: Alignment.bottomLeft,
+      children: [
+        letter.coverImageUrl != null
+            ? Image.network(
+              letter.coverImageUrl!,
+              height: 150,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder:
+                  (context, error, stack) => _buildPlaceholder(context),
+            )
+            : _buildPlaceholder(context),
+        Container(
+          height: 150,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+              stops: const [0.5, 1.0],
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(
+                letter.isLocked
+                    ? Icons.lock_clock_outlined
+                    : Icons.lock_open_outlined,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                letter.isLocked ? 'Kilitli' : 'Kilidi Açık',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlaceholder(BuildContext context) {
+    return Container(
+      height: 150,
+      color: Theme.of(context).primaryColorLight,
+      child: const Center(
+        child: Icon(Icons.mail_outline, size: 60, color: Colors.white70),
+      ),
+    );
+  }
+
+  Widget _buildUnlockedActions(BuildContext context) {
+    return Center(
+      child: ElevatedButton.icon(
+        onPressed: () {
+          // Mektubu okuma ekranı açılacak
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${letter.id} ID\'li mektup görüntüleniyor.'),
+            ),
+          );
+        },
+        icon: const Icon(Icons.drafts_outlined),
+        label: const Text('Şimdi Oku'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Theme.of(context).colorScheme.secondary,
+          foregroundColor: Theme.of(context).colorScheme.onSecondary,
+        ),
+      ),
+    );
+  }
+}
+
+class CountdownTimer extends StatefulWidget {
+  final DateTime openDate;
+
+  const CountdownTimer({Key? key, required this.openDate}) : super(key: key);
+
+  @override
+  _CountdownTimerState createState() => _CountdownTimerState();
+}
+
+class _CountdownTimerState extends State<CountdownTimer> {
+  late Timer _timer;
+  late Duration _remainingTime;
+
+  @override
+  void initState() {
+    super.initState();
+    _remainingTime = widget.openDate.difference(DateTime.now());
+    _timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      setState(() {
+        _remainingTime = widget.openDate.difference(DateTime.now());
+        if (_remainingTime.isNegative) {
+          timer.cancel();
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_remainingTime.isNegative) {
+      return Center(
+        child: Text(
+          'Mektubun kilidi şimdi açıldı!',
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final days = _remainingTime.inDays;
+    final hours = twoDigits(_remainingTime.inHours.remainder(24));
+    final minutes = twoDigits(_remainingTime.inMinutes.remainder(60));
+    final seconds = twoDigits(_remainingTime.inSeconds.remainder(60));
+
+    return Column(
+      children: [
+        Text(
+          'Kalan Süre',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$days gün $hours:$minutes:$seconds',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontFamily: 'monospace',
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+      ],
     );
   }
 }

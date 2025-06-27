@@ -1,3 +1,5 @@
+import 'dart:io';
+
 enum AlbumType { time, location }
 
 enum AlbumAccess { onlyMe, specific, multiple }
@@ -5,7 +7,8 @@ enum AlbumAccess { onlyMe, specific, multiple }
 class Album {
   final String id;
   final String title;
-  final String coverImageUrl;
+  final String? coverImageUrl;
+  final File? coverImageFile;
   final int itemCount;
   final DateTime lastUpdated;
   final AlbumType type;
@@ -20,7 +23,8 @@ class Album {
   Album({
     required this.id,
     required this.title,
-    required this.coverImageUrl,
+    this.coverImageUrl,
+    this.coverImageFile,
     required this.itemCount,
     required this.lastUpdated,
     required this.type,
@@ -32,6 +36,40 @@ class Album {
     required this.access,
     required this.accessUserEmails,
   });
+
+  Album copyWith({
+    String? id,
+    String? title,
+    String? coverImageUrl,
+    File? coverImageFile,
+    int? itemCount,
+    DateTime? lastUpdated,
+    AlbumType? type,
+    DateTime? unlockTime,
+    String? locationName,
+    double? latitude,
+    double? longitude,
+    List<AlbumContent>? contents,
+    AlbumAccess? access,
+    List<String>? accessUserEmails,
+  }) {
+    return Album(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      coverImageUrl: coverImageUrl ?? this.coverImageUrl,
+      coverImageFile: coverImageFile ?? this.coverImageFile,
+      itemCount: itemCount ?? this.itemCount,
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+      type: type ?? this.type,
+      unlockTime: unlockTime ?? this.unlockTime,
+      locationName: locationName ?? this.locationName,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      contents: contents ?? this.contents,
+      access: access ?? this.access,
+      accessUserEmails: accessUserEmails ?? this.accessUserEmails,
+    );
+  }
 
   // Örnek veri oluşturmak için yardımcı fabrika
   factory Album.createSample(int index) {
