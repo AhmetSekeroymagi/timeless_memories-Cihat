@@ -101,8 +101,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 ),
               )
             else ...[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                alignment: WrapAlignment.center,
                 children: [
                   ElevatedButton.icon(
                     onPressed: () => _addContent('photo'),
