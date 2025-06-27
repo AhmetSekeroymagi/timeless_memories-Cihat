@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'album_model.dart';
 import 'dart:math';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 class AlbumDetailScreen extends StatefulWidget {
   final Album album;
@@ -72,6 +74,23 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     });
   }
 
+  void _addPhoto() async {
+    final picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        album.contents.add(
+          AlbumContent(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            type: 'photo',
+            urlOrText: pickedFile.path, // Cihazdan seçilen fotoğrafın yolu
+            createdAt: DateTime.now(),
+          ),
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,7 +125,7 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 child: Row(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () => _addContent('photo'),
+                      onPressed: _addPhoto,
                       icon: const Icon(Icons.photo),
                       label: const Text('Fotoğraf'),
                     ),
@@ -142,15 +161,22 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                             final c = album.contents[i];
                             return Card(
                               child: ListTile(
-                                leading: Icon(
-                                  c.type == 'photo'
-                                      ? Icons.photo
-                                      : c.type == 'video'
-                                      ? Icons.videocam
-                                      : c.type == 'audio'
-                                      ? Icons.mic
-                                      : Icons.text_snippet,
-                                ),
+                                leading: c.type == 'photo'
+                                    ? (c.urlOrText.startsWith('http')
+                                        ? Image.network(c.urlOrText, width: 48, height: 48, fit: BoxFit.cover)
+                                        : Image.file(
+                                            File(c.urlOrText),
+                                            width: 48,
+                                            height: 48,
+                                            fit: BoxFit.cover,
+                                          ))
+                                    : Icon(
+                                        c.type == 'video'
+                                            ? Icons.videocam
+                                            : c.type == 'audio'
+                                                ? Icons.mic
+                                                : Icons.text_snippet,
+                                      ),
                                 title: Text(c.type.toUpperCase()),
                                 subtitle: Text(
                                   c.type == 'text' ? c.urlOrText : '',
