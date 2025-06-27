@@ -9,6 +9,7 @@ import 'firebase_options.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeless_memories/modules/service/memory_service.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 /// Uygulama navigasyon anahtarı
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -16,6 +17,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 Future<void> main() async {
   try {
     WidgetsFlutterBinding.ensureInitialized();
+    await initializeDateFormatting('tr_TR');
 
     // Türkçe klavye girişini etkinleştir
     SystemChannels.textInput.invokeMethod('TextInput.setImeOptions', {

@@ -23,11 +23,18 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     if (album.type == AlbumType.time && album.unlockTime != null) {
       return DateTime.now().isBefore(album.unlockTime!);
     }
-    if (album.type == AlbumType.location && album.latitude != null && album.longitude != null) {
+    if (album.type == AlbumType.location &&
+        album.latitude != null &&
+        album.longitude != null) {
       // Dummy: Kullanıcı konumu sabit, mesafe 300m (kilitli)
       double userLat = 41.0082;
       double userLon = 28.9784;
-      double dist = _calculateDistance(userLat, userLon, album.latitude!, album.longitude!);
+      double dist = _calculateDistance(
+        userLat,
+        userLon,
+        album.latitude!,
+        album.longitude!,
+      );
       return dist > 0.2; // 200 metre
     }
     return false;
@@ -38,10 +45,15 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
     double dLat = _deg2rad(lat2 - lat1);
     double dLon = _deg2rad(lon2 - lon1);
     double a =
-        sin(dLat / 2) * sin(dLat / 2) + cos(_deg2rad(lat1)) * cos(_deg2rad(lat2)) * sin(dLon / 2) * sin(dLon / 2);
+        sin(dLat / 2) * sin(dLat / 2) +
+        cos(_deg2rad(lat1)) *
+            cos(_deg2rad(lat2)) *
+            sin(dLon / 2) *
+            sin(dLon / 2);
     double c = 2 * atan2(sqrt(a), sqrt(1 - a));
     return R * c;
   }
+
   double _deg2rad(double deg) => deg * (pi / 180);
 
   void _addContent(String type) {
@@ -50,9 +62,10 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         AlbumContent(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           type: type,
-          urlOrText: type == 'text'
-              ? 'Yeni metin notu'
-              : 'https://via.placeholder.com/100',
+          urlOrText:
+              type == 'text'
+                  ? 'Yeni metin notu'
+                  : 'https://via.placeholder.com/100',
           createdAt: DateTime.now(),
         ),
       );
@@ -68,8 +81,6 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(album.description, style: const TextStyle(fontSize: 16)),
-            const SizedBox(height: 12),
             if (isLocked)
               Container(
                 padding: const EdgeInsets.all(12),
@@ -81,9 +92,11 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                   children: [
                     const Icon(Icons.lock, color: Colors.orange),
                     const SizedBox(width: 8),
-                    Text(album.type == AlbumType.time
-                        ? '⏳ ${album.unlockTime!.day}.${album.unlockTime!.month}.${album.unlockTime!.year} tarihine kadar kilitli'
-                        : '📍 Konuma yaklaşınca açılacak'),
+                    Text(
+                      album.type == AlbumType.time
+                          ? '⏳ ${album.unlockTime!.day}.${album.unlockTime!.month}.${album.unlockTime!.year} tarihine kadar kilitli'
+                          : '📍 Konuma yaklaşınca açılacak',
+                    ),
                   ],
                 ),
               )
@@ -115,30 +128,35 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: album.contents.isEmpty
-                    ? const Center(child: Text('Henüz içerik yok.'))
-                    : ListView.builder(
-                        itemCount: album.contents.length,
-                        itemBuilder: (context, i) {
-                          final c = album.contents[i];
-                          return Card(
-                            child: ListTile(
-                              leading: Icon(
-                                c.type == 'photo'
-                                    ? Icons.photo
-                                    : c.type == 'video'
-                                        ? Icons.videocam
-                                        : c.type == 'audio'
-                                            ? Icons.mic
-                                            : Icons.text_snippet,
+                child:
+                    album.contents.isEmpty
+                        ? const Center(child: Text('Henüz içerik yok.'))
+                        : ListView.builder(
+                          itemCount: album.contents.length,
+                          itemBuilder: (context, i) {
+                            final c = album.contents[i];
+                            return Card(
+                              child: ListTile(
+                                leading: Icon(
+                                  c.type == 'photo'
+                                      ? Icons.photo
+                                      : c.type == 'video'
+                                      ? Icons.videocam
+                                      : c.type == 'audio'
+                                      ? Icons.mic
+                                      : Icons.text_snippet,
+                                ),
+                                title: Text(c.type.toUpperCase()),
+                                subtitle: Text(
+                                  c.type == 'text' ? c.urlOrText : '',
+                                ),
+                                trailing: Text(
+                                  '${c.createdAt.hour}:${c.createdAt.minute.toString().padLeft(2, '0')}',
+                                ),
                               ),
-                              title: Text(c.type.toUpperCase()),
-                              subtitle: Text(c.type == 'text' ? c.urlOrText : ''),
-                              trailing: Text('${c.createdAt.hour}:${c.createdAt.minute.toString().padLeft(2, '0')}'),
-                            ),
-                          );
-                        },
-                      ),
+                            );
+                          },
+                        ),
               ),
             ],
           ],
@@ -146,4 +164,4 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
       ),
     );
   }
-} 
+}

@@ -17,6 +17,7 @@ import 'package:timeless_memories/modules/galery/location_capsules_screen.dart';
 import 'package:timeless_memories/modules/galery/family_sharing_screen.dart';
 import 'package:timeless_memories/modules/galery/nfc_scan_screen.dart';
 import 'package:timeless_memories/modules/user/profile/settings_help_screen.dart';
+import 'package:timeless_memories/modules/galery/notifications_screen.dart';
 
 // 1. MemoryService için bir Provider oluştur
 final memoryServiceProvider = Provider<MemoryService>((ref) {
@@ -69,115 +70,13 @@ class FavoritesPage extends StatelessWidget {
   }
 }
 
-class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({Key? key}) : super(key: key);
-
-  @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final List<Map<String, dynamic>> notifications = [
-    {
-      'id': '1',
-      'title': 'Aile Albümü 10 gün sonra açılıyor!',
-      'desc': 'Aile Albümü, 10 gün sonra erişime açılacak.',
-      'capsule': {
-        'title': 'Aile Albümü',
-        'description': 'Aile ile paylaşılan özel anılar.',
-        'isLocked': true,
-        'openAt': DateTime.now().add(const Duration(days: 10)),
-        'photoUrl': 'https://via.placeholder.com/100',
-        'videoUrl': null,
-        'audioUrl': null,
-        'note': 'Aile albümü notu',
-        'location': null,
-      },
-      'read': false,
-      'date': DateTime.now().add(const Duration(days: 10)),
-    },
-    {
-      'id': '2',
-      'title': 'Sevgilim Albümü Duygu Cafe konumunda açılacak!',
-      'desc': 'Sevgilim Albümü, Duygu Cafe konumuna yaklaştığında açılacak.',
-      'capsule': {
-        'title': 'Sevgilim Albümü',
-        'description': 'Sevgiliyle paylaşılan anılar.',
-        'isLocked': true,
-        'openAt': null,
-        'photoUrl': 'https://via.placeholder.com/100',
-        'videoUrl': null,
-        'audioUrl': null,
-        'note': 'Sevgilim albümü notu',
-        'location': 'Duygu Cafe',
-      },
-      'read': false,
-      'date': DateTime.now(),
-    },
-  ];
-
-  void _markAsRead(int index) {
-    setState(() {
-      notifications[index]['read'] = true;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Bildirimler')),
-      body: ListView.separated(
-        itemCount: notifications.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final notif = notifications[index];
-          return ListTile(
-            leading: notif['read']
-                ? const Icon(Icons.notifications_none)
-                : const Icon(Icons.notifications_active, color: Colors.orange),
-            title: Text(
-              notif['title'],
-              style: TextStyle(
-                fontWeight: notif['read'] ? FontWeight.normal : FontWeight.bold,
-              ),
-            ),
-            subtitle: Text(notif['desc']),
-            trailing: notif['read']
-                ? null
-                : const Icon(Icons.circle, color: Colors.orange, size: 12),
-            onTap: () {
-              _markAsRead(index);
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => CapsuleDetailScreen(
-                    title: notif['capsule']['title'],
-                    description: notif['capsule']['description'],
-                    isLocked: notif['capsule']['isLocked'],
-                    openAt: notif['capsule']['openAt'],
-                    photoUrl: notif['capsule']['photoUrl'],
-                    videoUrl: notif['capsule']['videoUrl'],
-                    audioUrl: notif['capsule']['audioUrl'],
-                    note: notif['capsule']['note'],
-                    location: notif['capsule']['location'],
-                  ),
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
 class _HomePageState extends ConsumerState<HomePage> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
     const HomeContent(),
     const ExploreScreen(),
-    SizedBox.shrink(), // + butonu için boş
-    NotificationsScreen(),
+    const SizedBox.shrink(), // + butonu için boş
+    const NotificationsScreen(),
     const ProfileScreen(),
   ];
 
@@ -194,7 +93,10 @@ class _HomePageState extends ConsumerState<HomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Yeni Ekle', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const Text(
+                  'Yeni Ekle',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -222,7 +124,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AddImagePage(), // Dummy olarak aynı sayfa
+                            builder:
+                                (context) =>
+                                    const AddImagePage(), // Dummy olarak aynı sayfa
                           ),
                         );
                       },
@@ -248,7 +152,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                       onTap: () {
                         Navigator.pop(context);
                         setState(() {
-                          _selectedIndex = 4; // Profil sekmesinden FutureLetterScreen'e yönlendirme yapılabilir
+                          _selectedIndex =
+                              4; // Profil sekmesinden FutureLetterScreen'e yönlendirme yapılabilir
                         });
                         Navigator.push(
                           context,
@@ -278,11 +183,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               padding: EdgeInsets.zero,
               children: [
                 DrawerHeader(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF07B183),
-                  ),
+                  decoration: const BoxDecoration(color: Color(0xFF07B183)),
                   child: Center(
-                    child: Text('Menü', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Menü',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
                 ListTile(
@@ -292,7 +202,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const GalleryPage()),
+                      MaterialPageRoute(
+                        builder: (context) => const GalleryPage(),
+                      ),
                     );
                   },
                 ),
@@ -303,7 +215,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const LocationCapsulesScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LocationCapsulesScreen(),
+                      ),
                     );
                   },
                 ),
@@ -314,7 +228,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const FamilySharingScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const FamilySharingScreen(),
+                      ),
                     );
                   },
                 ),
@@ -325,7 +241,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const NfcScanScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const NfcScanScreen(),
+                      ),
                     );
                   },
                 ),
@@ -336,7 +254,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const SettingsHelpScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const SettingsHelpScreen(),
+                      ),
                     );
                   },
                 ),
@@ -364,10 +284,11 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
             ),
             leading: Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
+              builder:
+                  (context) => IconButton(
+                    icon: const Icon(Icons.menu),
+                    onPressed: () => Scaffold.of(context).openDrawer(),
+                  ),
             ),
             actions: [
               IconButton(
@@ -411,7 +332,10 @@ class _HomePageState extends ConsumerState<HomePage> {
           icon: Icon(Icons.add_circle, size: 40),
           label: '',
         ),
-        BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Bildirimler'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.notifications),
+          label: 'Bildirimler',
+        ),
         BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
       ],
     );

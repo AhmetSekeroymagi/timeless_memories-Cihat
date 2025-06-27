@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'capsule_detail_screen.dart';
+import 'capsule_model.dart';
 
 class NfcScanScreen extends StatefulWidget {
   const NfcScanScreen({Key? key}) : super(key: key);
@@ -9,7 +10,8 @@ class NfcScanScreen extends StatefulWidget {
   State<NfcScanScreen> createState() => _NfcScanScreenState();
 }
 
-class _NfcScanScreenState extends State<NfcScanScreen> with SingleTickerProviderStateMixin {
+class _NfcScanScreenState extends State<NfcScanScreen>
+    with SingleTickerProviderStateMixin {
   bool _isScanning = false;
   bool _scanSuccess = false;
   late AnimationController _controller;
@@ -43,20 +45,26 @@ class _NfcScanScreenState extends State<NfcScanScreen> with SingleTickerProvider
       });
       await Future.delayed(const Duration(milliseconds: 500));
       if (mounted) {
+        final nfcCapsule = Capsule(
+          id: 'nfc-${DateTime.now().millisecondsSinceEpoch}',
+          title: 'NFC ile Açılan Kapsül',
+          imageUrl:
+              'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=2070&auto=format&fit=crop',
+          createdAt: DateTime.now().subtract(const Duration(days: 30)),
+          openAt: DateTime.now(),
+          isOpened: true,
+          mediaTypes: [MediaType.photo, MediaType.text],
+          owner: 'Fiziksel Kolyem',
+          likes: 15,
+          comments: 3,
+          tags: ['nfc', 'anı', 'kolye'],
+          location: LatLngModel(latitude: 41.0259, longitude: 28.9744),
+        );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => CapsuleDetailScreen(
-              title: 'NFC ile Açılan Kapsül',
-              description: 'Bu kapsül fiziksel kolye ile açıldı.',
-              isLocked: false,
-              openAt: DateTime.now(),
-              photoUrl: 'https://via.placeholder.com/100',
-              videoUrl: null,
-              audioUrl: null,
-              note: 'NFC ile açılan kapsül notu.',
-              location: 'İstanbul',
-            ),
+            builder: (context) => CapsuleDetailScreen(capsule: nfcCapsule),
           ),
         );
       }
@@ -67,7 +75,9 @@ class _NfcScanScreenState extends State<NfcScanScreen> with SingleTickerProvider
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('NFC okuma başarısız! Lütfen tekrar deneyin.')),
+          const SnackBar(
+            content: Text('NFC okuma başarısız! Lütfen tekrar deneyin.'),
+          ),
         );
       }
     }
@@ -103,15 +113,18 @@ class _NfcScanScreenState extends State<NfcScanScreen> with SingleTickerProvider
             ),
             const SizedBox(height: 32),
             _isScanning
-                ? const Text('NFC taranıyor...', style: TextStyle(color: Colors.green))
+                ? const Text(
+                  'NFC taranıyor...',
+                  style: TextStyle(color: Colors.green),
+                )
                 : ElevatedButton.icon(
-                    onPressed: _startScan,
-                    icon: const Icon(Icons.nfc),
-                    label: const Text('NFC Taramasını Başlat'),
-                  ),
+                  onPressed: _startScan,
+                  icon: const Icon(Icons.nfc),
+                  label: const Text('NFC Taramasını Başlat'),
+                ),
           ],
         ),
       ),
     );
   }
-} 
+}
