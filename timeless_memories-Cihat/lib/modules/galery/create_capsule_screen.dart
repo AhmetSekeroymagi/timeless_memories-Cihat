@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'capsule_model.dart';
 
 enum Sharing { private, family, public }
 
@@ -107,11 +108,34 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
     setState(() => _isSaving = true);
     await Future.delayed(const Duration(seconds: 2));
     setState(() => _isSaving = false);
+
+    // Create the capsule object from the form data
+    final newCapsule = Capsule(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      title: _titleController.text,
+      // Using a placeholder image for now, as image upload is a simulation.
+      imageUrl:
+          _image != null
+              ? 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=2070&auto=format&fit=crop'
+              : 'https://images.unsplash.com/photo-1517423568346-65a021ab70c1?q=80&w=1974&auto=format&fit=crop',
+      createdAt: DateTime.now(),
+      openAt: _openDate ?? DateTime.now().add(const Duration(days: 30)),
+      isOpened: false,
+      mediaTypes: [
+        if (_image != null) MediaType.photo,
+        if (_video != null) MediaType.video,
+        if (_audioPath != null) MediaType.audio,
+        if (_textNoteController.text.isNotEmpty) MediaType.text,
+      ],
+      owner: "Siz", // Dummy owner
+      likes: 0,
+      comments: 0,
+      tags: ['yeni', _sharing.name],
+      location: null, // Location is not handled in this form yet
+    );
+
     if (mounted) {
-      Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Kapsül başarıyla oluşturuldu!')),
-      );
+      Navigator.of(context).pop(newCapsule);
     }
   }
 

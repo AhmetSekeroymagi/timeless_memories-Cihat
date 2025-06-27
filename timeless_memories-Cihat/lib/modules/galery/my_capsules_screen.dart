@@ -4,10 +4,16 @@ import 'capsule_detail_screen.dart';
 import 'create_capsule_screen.dart';
 import 'capsule_model.dart';
 
-class MyCapsulesScreen extends StatelessWidget {
-  MyCapsulesScreen({super.key});
+class MyCapsulesScreen extends StatefulWidget {
+  const MyCapsulesScreen({super.key});
 
-  final List<Capsule> capsules = [
+  @override
+  State<MyCapsulesScreen> createState() => _MyCapsulesScreenState();
+}
+
+class _MyCapsulesScreenState extends State<MyCapsulesScreen> {
+  // Kapsül listesi artık state içinde yönetiliyor
+  final List<Capsule> _capsules = [
     Capsule(
       id: '1',
       title: 'İlk Kapsülüm',
@@ -60,29 +66,38 @@ class MyCapsulesScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _navigateToCreateCapsule() async {
+    final newCapsule = await Navigator.push<Capsule>(
+      context,
+      MaterialPageRoute(builder: (context) => const CreateCapsuleScreen()),
+    );
+
+    if (newCapsule != null) {
+      setState(() {
+        _capsules.insert(0, newCapsule);
+      });
+      ScaffoldMessenger.of(context)
+        ..removeCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Kapsül başarıyla oluşturuldu ve eklendi!'),
+          ),
+        );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Kapsüllerim'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            onPressed:
-                () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CreateCapsuleScreen(),
-                  ),
-                ),
-          ),
-        ],
+        // AppBar'daki + butonu kaldırıldı, FAB yeterli
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(8.0),
-        itemCount: capsules.length,
+        itemCount: _capsules.length,
         itemBuilder: (context, index) {
-          final capsule = capsules[index];
+          final capsule = _capsules[index];
           final isLocked = !capsule.isOpened;
           final duration = capsule.openAt.difference(DateTime.now());
 
@@ -236,14 +251,7 @@ class MyCapsulesScreen extends StatelessWidget {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const CreateCapsuleScreen(),
-            ),
-          );
-        },
+        onPressed: _navigateToCreateCapsule,
         label: const Text('Yeni Kapsül'),
         icon: const Icon(Icons.add),
         tooltip: 'Yeni Kapsül Oluştur',
