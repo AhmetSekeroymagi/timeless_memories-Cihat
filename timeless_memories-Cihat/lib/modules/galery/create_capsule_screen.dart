@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -20,6 +19,7 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
     GlobalKey<FormState>(),
     GlobalKey<FormState>(),
     GlobalKey<FormState>(),
+    GlobalKey<FormState>(), // Added key for the new structure
   ];
 
   // Step 1: Details
@@ -34,7 +34,6 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
 
   // Step 3: Configuration
   DateTime? _openDate;
-  String? _location;
   Sharing _sharing = Sharing.private;
 
   // Step 4: NFC & Save
@@ -42,27 +41,31 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
 
   final ImagePicker _picker = ImagePicker();
 
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _textNoteController.dispose();
+    super.dispose();
+  }
+
+  // --- Actions ---
   Future<void> _pickImage() async {
     final XFile? pickedFile = await _picker.pickImage(
       source: ImageSource.gallery,
     );
-    if (pickedFile != null) {
-      setState(() => _image = File(pickedFile.path));
-    }
+    if (pickedFile != null) setState(() => _image = File(pickedFile.path));
   }
 
   Future<void> _pickVideo() async {
     final XFile? pickedFile = await _picker.pickVideo(
       source: ImageSource.gallery,
     );
-    if (pickedFile != null) {
-      setState(() => _video = File(pickedFile.path));
-    }
+    if (pickedFile != null) setState(() => _video = File(pickedFile.path));
   }
 
   void _recordAudio() {
-    // Dummy audio recording logic
-    setState(() => _audioPath = 'recorded_audio.mp3');
+    setState(() => _audioPath = 'kaydedildi.mp3');
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Ses kaydı tamamlandı (simülasyon).')),
     );
@@ -75,11 +78,44 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
       firstDate: DateTime.now().add(const Duration(days: 1)),
       lastDate: DateTime(2101),
     );
-    if (picked != null && picked != _openDate) {
+    if (picked != null && picked != _openDate)
       setState(() => _openDate = picked);
+  }
+
+  void _onStepContinue() {
+    // Validate current step before proceeding
+    bool isStepValid =
+        _formKeys[_currentStep].currentState?.validate() ?? false;
+
+    if (isStepValid) {
+      if (_currentStep < _steps().length - 1) {
+        setState(() => _currentStep++);
+      } else {
+        _saveCapsule();
+      }
     }
   }
 
+  void _onStepCancel() {
+    if (_currentStep > 0) {
+      setState(() => _currentStep--);
+    }
+  }
+
+  void _saveCapsule() async {
+    // All forms are already validated step-by-step
+    setState(() => _isSaving = true);
+    await Future.delayed(const Duration(seconds: 2));
+    setState(() => _isSaving = false);
+    if (mounted) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Kapsül başarıyla oluşturuldu!')),
+      );
+    }
+  }
+
+  // --- UI Descriptions ---
   String get _sharingDescription {
     switch (_sharing) {
       case Sharing.private:
@@ -102,53 +138,17 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
     }
   }
 
-  void _saveCapsule() async {
-    if (_formKeys.every((key) => key.currentState!.validate())) {
-      setState(() => _isSaving = true);
-      // Dummy save operation
-      await Future.delayed(const Duration(seconds: 2));
-      setState(() => _isSaving = false);
-      if (mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Kapsül başarıyla oluşturuldu!')),
-        );
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen tüm gerekli alanları doldurun.')),
-      );
-    }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _textNoteController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Yeni Kapsül Oluştur')),
       body: Stepper(
-        type: StepperType.horizontal,
+        type: StepperType.vertical,
         currentStep: _currentStep,
         onStepTapped: (step) => setState(() => _currentStep = step),
-        onStepContinue: () {
-          if (_currentStep < _steps().length - 1) {
-            setState(() => _currentStep++);
-          } else {
-            _saveCapsule();
-          }
-        },
-        onStepCancel: () {
-          if (_currentStep > 0) {
-            setState(() => _currentStep--);
-          }
-        },
+        onStepContinue: _onStepContinue,
+        onStepCancel: _onStepCancel,
+        steps: _steps(),
         controlsBuilder: (context, details) {
           return Padding(
             padding: const EdgeInsets.only(top: 16.0),
@@ -169,7 +169,6 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
             ),
           );
         },
-        steps: _steps(),
       ),
     );
   }
@@ -177,165 +176,248 @@ class _CreateCapsuleScreenState extends State<CreateCapsuleScreen> {
   List<Step> _steps() {
     return [
       Step(
-        title: const Text('Detaylar'),
+        title: const Text('Temel Bilgiler'),
         isActive: _currentStep >= 0,
         state: _currentStep > 0 ? StepState.complete : StepState.indexed,
         content: Form(
           key: _formKeys[0],
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Kapsül Başlığı'),
-                validator:
-                    (value) => value!.isEmpty ? 'Başlık boş olamaz' : null,
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Kapsül Başlığı',
+                      prefixIcon: Icon(Icons.title),
+                    ),
+                    validator: (v) => v!.isEmpty ? 'Başlık boş olamaz' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: const InputDecoration(
+                      labelText: 'Açıklama',
+                      prefixIcon: Icon(Icons.description),
+                    ),
+                    maxLines: 3,
+                    validator: (v) => v!.isEmpty ? 'Açıklama boş olamaz' : null,
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Açıklama'),
-                maxLines: 3,
-                validator:
-                    (value) => value!.isEmpty ? 'Açıklama boş olamaz' : null,
-              ),
-            ],
+            ),
           ),
         ),
       ),
       Step(
-        title: const Text('İçerik'),
+        title: const Text('İçerik Ekle'),
         isActive: _currentStep >= 1,
         state: _currentStep > 1 ? StepState.complete : StepState.indexed,
-        content: Column(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Fotoğraf Yükle'),
-              subtitle:
-                  _image != null ? Text(_image!.path.split('/').last) : null,
-              onTap: _pickImage,
+        content: Form(
+          key: _formKeys[1],
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  if (_image != null)
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        _image!,
+                        height: 150,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  if (_image != null) const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _buildMediaPickerBox(
+                        icon: Icons.photo_library,
+                        label: 'Fotoğraf',
+                        onTap: _pickImage,
+                      ),
+                      _buildMediaPickerBox(
+                        icon: Icons.video_library,
+                        label: 'Video',
+                        onTap: _pickVideo,
+                      ),
+                      _buildMediaPickerBox(
+                        icon: Icons.mic,
+                        label: 'Ses',
+                        onTap: _recordAudio,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _textNoteController,
+                    decoration: const InputDecoration(
+                      labelText: 'Metin Notu Ekle',
+                      prefixIcon: Icon(Icons.article),
+                    ),
+                    maxLines: 4,
+                  ),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.video_library),
-              title: const Text('Video Yükle'),
-              subtitle:
-                  _video != null ? Text(_video!.path.split('/').last) : null,
-              onTap: _pickVideo,
-            ),
-            ListTile(
-              leading: const Icon(Icons.mic),
-              title: const Text('Ses Kaydet'),
-              subtitle: _audioPath != null ? Text(_audioPath!) : null,
-              onTap: _recordAudio,
-            ),
-            TextFormField(
-              controller: _textNoteController,
-              decoration: const InputDecoration(labelText: 'Metin Notu Ekle'),
-              maxLines: 4,
-            ),
-          ],
+          ),
         ),
       ),
       Step(
         title: const Text('Yapılandırma'),
         isActive: _currentStep >= 2,
         state: _currentStep > 2 ? StepState.complete : StepState.indexed,
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.calendar_today),
-              title: const Text('Açılış Tarihi'),
-              subtitle: Text(
-                _openDate == null
-                    ? 'Tarih Seç'
-                    : DateFormat('dd MMMM yyyy', 'tr_TR').format(_openDate!),
+        content: Form(
+          key: _formKeys[2],
+          child: Column(
+            children: [
+              Card(
+                child: ListTile(
+                  leading: const Icon(
+                    Icons.calendar_today,
+                    color: Colors.blueAccent,
+                  ),
+                  title: const Text('Açılış Tarihi'),
+                  subtitle: Text(
+                    _openDate == null
+                        ? 'Lütfen bir tarih seçin'
+                        : DateFormat(
+                          'dd MMMM yyyy',
+                          'tr_TR',
+                        ).format(_openDate!),
+                  ),
+                  onTap: () => _selectDate(context),
+                ),
               ),
-              onTap: () => _selectDate(context),
-            ),
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Paylaşım Seçenekleri",
-                style: Theme.of(context).textTheme.titleMedium,
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Column(
+                    children:
+                        Sharing.values.map((sharing) {
+                          return RadioListTile<Sharing>(
+                            title: Text(
+                              sharing.toString().split('.').last.toUpperCase(),
+                            ),
+                            secondary: Icon(getSharingIcon(sharing)),
+                            value: sharing,
+                            groupValue: _sharing,
+                            onChanged: (v) => setState(() => _sharing = v!),
+                          );
+                        }).toList(),
+                  ),
+                ),
               ),
-            ),
-            ...Sharing.values.map(
-              (sharing) => RadioListTile<Sharing>(
-                title: Text(sharing.toString().split('.').last.toUpperCase()),
-                value: sharing,
-                groupValue: _sharing,
-                onChanged: (Sharing? value) {
-                  if (value != null) setState(() => _sharing = value);
-                },
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       Step(
-        title: const Text('Kaydet'),
+        title: const Text('Kaydet ve Tamamla'),
         isActive: _currentStep >= 3,
-        state:
-            _isSaving
-                ? StepState.editing
-                : (_currentStep >= 3 ? StepState.complete : StepState.indexed),
-        content:
-            _isSaving
-                ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 16),
-                      Text("Kapsül kaydediliyor..."),
-                    ],
-                  ),
-                )
-                : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Özet:',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+        state: _isSaving ? StepState.editing : StepState.indexed,
+        content: Form(
+          key: _formKeys[3],
+          child:
+              _isSaving
+                  ? const Center(
+                    child: Column(
+                      children: [
+                        CircularProgressIndicator(),
+                        SizedBox(height: 16),
+                        Text("Kapsül kaydediliyor..."),
+                      ],
                     ),
-                    Text('Başlık: ${_titleController.text}'),
-                    Text(
-                      'Açılış: ${_openDate != null ? DateFormat('dd.MM.yyyy').format(_openDate!) : "Belirtilmedi"}',
-                    ),
-                    ListTile(
-                      leading: Icon(_sharingIcon),
-                      title: Text(
-                        _sharing.toString().split('.').last.toUpperCase(),
-                      ),
-                      subtitle: Text(_sharingDescription),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'NFC Kolye Eşleştirme',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const Text(
-                      'Kaydettikten sonra kapsülünüzü bir NFC kolyeye bağlayabilirsiniz.',
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              'NFC Eşleştirme ekranına yönlendirilecek.',
-                            ),
+                  )
+                  : Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Özet',
+                            style: Theme.of(context).textTheme.titleLarge,
                           ),
-                        );
-                      },
-                      icon: const Icon(Icons.nfc),
-                      label: const Text("Şimdi Eşleştir (Simülasyon)"),
+                          const Divider(),
+                          ListTile(
+                            leading: const Icon(Icons.title),
+                            title: Text(_titleController.text),
+                            subtitle: const Text("Başlık"),
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.calendar_month),
+                            title: Text(
+                              _openDate != null
+                                  ? DateFormat('dd.MM.yyyy').format(_openDate!)
+                                  : "Belirtilmedi",
+                            ),
+                            subtitle: const Text("Açılış Tarihi"),
+                          ),
+                          ListTile(
+                            leading: Icon(_sharingIcon),
+                            title: Text(
+                              _sharing.toString().split('.').last.toUpperCase(),
+                            ),
+                            subtitle: Text(_sharingDescription),
+                          ),
+                          const Divider(),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'NFC Kolye Eşleştirme',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 5),
+                          const Text(
+                            'Kaydettikten sonra kapsülünüzü bir NFC kolyeye bağlayabilirsiniz.',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+        ),
       ),
     ];
+  }
+
+  Widget _buildMediaPickerBox({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(height: 8),
+            Text(label),
+          ],
+        ),
+      ),
+    );
+  }
+
+  IconData getSharingIcon(Sharing sharing) {
+    switch (sharing) {
+      case Sharing.private:
+        return Icons.lock;
+      case Sharing.family:
+        return Icons.group;
+      case Sharing.public:
+        return Icons.public;
+    }
   }
 }
