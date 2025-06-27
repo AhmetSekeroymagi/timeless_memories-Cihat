@@ -18,6 +18,8 @@ import 'package:timeless_memories/modules/galery/family_sharing_screen.dart';
 import 'package:timeless_memories/modules/galery/nfc_scan_screen.dart';
 import 'package:timeless_memories/modules/user/profile/settings_help_screen.dart';
 import 'package:timeless_memories/modules/galery/notifications_screen.dart';
+import 'package:timeless_memories/modules/galery/my_capsules_screen.dart';
+import 'package:timeless_memories/modules/galery/album_list_screen.dart';
 
 // 1. MemoryService için bir Provider oluştur
 final memoryServiceProvider = Provider<MemoryService>((ref) {
@@ -77,7 +79,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     const ExploreScreen(),
     const SizedBox.shrink(), // + butonu için boş
     const NotificationsScreen(),
-    const ProfileScreen(),
+    ProfileScreen(),
   ];
 
   void _onPlusPressed(BuildContext context) {
@@ -196,8 +198,48 @@ class _HomePageState extends ConsumerState<HomePage> {
                   ),
                 ),
                 ListTile(
+                  leading: const Icon(Icons.inventory_2_outlined),
+                  title: const Text('Kapsüllerim'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MyCapsulesScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_album_outlined),
+                  title: const Text('Albümler'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AlbumListScreen(),
+                      ),
+                    );
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.mail_outline),
+                  title: const Text('Geleceğe Mektup'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FutureLetterScreen(),
+                      ),
+                    );
+                  },
+                ),
+                const Divider(),
+                ListTile(
                   leading: const Icon(Icons.photo_library),
-                  title: const Text('Galeri'),
+                  title: const Text('Galeri (Eski)'),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
