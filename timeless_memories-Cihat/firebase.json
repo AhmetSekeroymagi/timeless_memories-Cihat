@@ -1,0 +1,29 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "timeless-memories-18960",
+          "appId": "1:505372730768:android:66785930b8b10568d17f15",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "timeless-memories-18960",
+          "configurations": {
+            "android": "1:505372730768:android:66785930b8b10568d17f15",
+            "ios": "1:505372730768:ios:666ddacea1363be4d17f15"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}

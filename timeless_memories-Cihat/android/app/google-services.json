@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "505372730768",
+    "project_id": "timeless-memories-18960",
+    "storage_bucket": "timeless-memories-18960.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:505372730768:android:66785930b8b10568d17f15",
+        "android_client_info": {
+          "package_name": "com.example.timeless_memories"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqNjtymJTw2Jk5rkptDMvdj1G70iFZ25g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
