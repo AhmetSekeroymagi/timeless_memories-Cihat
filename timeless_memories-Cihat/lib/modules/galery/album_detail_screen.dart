@@ -101,32 +101,35 @@ class _AlbumDetailScreenState extends State<AlbumDetailScreen> {
                 ),
               )
             else ...[
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
-                alignment: WrapAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () => _addContent('photo'),
-                    icon: const Icon(Icons.photo),
-                    label: const Text('Fotoğraf'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _addContent('video'),
-                    icon: const Icon(Icons.videocam),
-                    label: const Text('Video'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _addContent('audio'),
-                    icon: const Icon(Icons.mic),
-                    label: const Text('Ses'),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () => _addContent('text'),
-                    icon: const Icon(Icons.text_snippet),
-                    label: const Text('Metin'),
-                  ),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: () => _addContent('photo'),
+                      icon: const Icon(Icons.photo),
+                      label: const Text('Fotoğraf'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _addContent('video'),
+                      icon: const Icon(Icons.videocam),
+                      label: const Text('Video'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _addContent('audio'),
+                      icon: const Icon(Icons.mic),
+                      label: const Text('Ses'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: () => _addContent('text'),
+                      icon: const Icon(Icons.text_snippet),
+                      label: const Text('Metin'),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
